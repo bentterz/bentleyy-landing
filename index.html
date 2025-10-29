@@ -11,113 +11,94 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,900;1,14..32,900&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --bg: #000;
-      --fg: #fff;
-      --ring: #94a3b8;
+    :root { --bg:#000; --fg:#fff; --ring:#94a3b8; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--fg);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      display:grid; place-items:center; min-height:100svh;
     }
-    * { box-sizing: border-box; }
-    html, body { height:100%; }
-
-    body {
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family:Inter,system-ui;
-      display:grid;
-      place-items:center;
-      min-height:100svh;
-    }
-    .wrap {
-      text-align:center;
-      padding:2rem;
-      width:min(1100px,92vw);
-    }
-    h1.brand {
-      margin:0 0 3.5rem 0;
-      font-weight:900;
-      font-variation-settings:'wght' 1000;
-      font-style:italic;
-      letter-spacing:-0.01em;
-      line-height:.9;
+    .wrap{ text-align:center; padding:2rem; width:min(1100px,92vw); }
+    h1.brand{
+      margin:0 0 3.5rem 0; font-weight:900; font-variation-settings:'wght' 1000;
+      font-style:italic; letter-spacing:-0.01em; line-height:.9;
       font-size:clamp(3rem,14vw,12rem);
     }
-
-    .sub {
-      margin:0 0 2.75rem 0;
-      font-size:clamp(.9rem,2.6vw,1.05rem);
-      line-height:1.5;
-      max-width:45ch;
-      margin-inline:auto;
-    }
-    .sub.typing { position:relative; }
+    .sub{ margin:0 0 2.75rem 0; font-size:clamp(.9rem,2.6vw,1.05rem); line-height:1.5; max-width:45ch; margin-inline:auto; }
+    .sub.typing{ position:relative; }
     .sub.typing::after{
-      content:"";
-      display:inline-block;
-      width:0.08em;height:1em;
-      border-right:0.08em solid var(--fg);
-      animation:blink .8s step-end infinite;
+      content:""; display:inline-block; width:0.08em; height:1em;
+      border-right:0.08em solid var(--fg); animation:blink .8s step-end infinite;
       transform:translateY(0.1em);
     }
     @keyframes blink{from,to{border-color:transparent}50%{border-color:var(--fg)}}
-
     .cta{
-      display:inline-block;
-      padding:.9rem 1.25rem;
-      border-radius:9999px;
-      border:1px solid var(--fg);
-      color:var(--fg);
-      text-decoration:none;
-      font-weight:600;
-      margin-top:3.5rem;
-      transition:transform .15s;
+      display:inline-block; padding:.9rem 1.25rem; border-radius:9999px;
+      border:1px solid var(--fg); color:var(--fg); text-decoration:none; font-weight:600;
+      margin-top:3.5rem; transition:transform .15s ease;
     }
-    .cta:hover{transform:translateY(-1px)}
-    .cta:active{transform:translateY(0)}
+    .cta:hover{transform:translateY(-1px)} .cta:active{transform:translateY(0)}
   </style>
 </head>
 <body>
   <main class="wrap">
     <h1 class="brand">bentleyy</h1>
 
-    <p class="sub typing"
-       data-text="hello. i'm james your human powered assistant.
-reach out anytime ✌️">hello. i'm james your human powered assistant.
-reach out anytime ✌️</p>
+    <!-- JS will own this text; HTML content is only a safety fallback -->
+    <p id="typed" class="sub typing">hello. i'm james your human powered assistant.<br>reach out anytime ✌️</p>
 
     <a class="cta" href="mailto:james@bentleyy.com">contact</a>
   </main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function(){
-      function nl2br(s){return String(s).replace(/\r\n|\n|\r|\\n/g,'<br>');}
+    (function(){
+      // 1) Define the message here (source of truth). Use \n for a new line.
+      var TEXT = "hello. i'm james your human powered assistant.\nreach out anytime ✌️";
 
-      var el = document.querySelector('.sub');
-      if(!el) return;
+      // 2) Small helpers
+      function nl2br(s){ return String(s).replace(/\r\n|\n|\r|\\n/g,'<br>'); }
 
-      var text =
-        (el.dataset && el.dataset.text) ||
-        el.getAttribute('data-text') ||
-        el.textContent || '';
+      // 3) Start when DOM is ready (fallback to window load just in case)
+      function start(){
+        try{
+          var el = document.getElementById('typed');
+          if(!el){ return; }
 
-      if(!text.trim()){
-        el.classList.remove('typing');
-        return;
-      }
+          // If for some reason TEXT is empty, fall back to the existing inner text
+          var text = (TEXT && TEXT.trim()) ? TEXT : (el.textContent || '');
+          if(!text.trim()){
+            el.classList.remove('typing'); // stop the caret
+            return;
+          }
 
-      var i=0, speed=70;
-      el.innerHTML='';
-      function next(){
-        var partial=text.slice(0, ++i);
-        el.innerHTML = nl2br(partial);
-        if(i < text.length){
-          setTimeout(next,speed);
-        } else {
-          el.classList.remove('typing');
+          var i = 0, speed = 70;
+          el.innerHTML = ''; // start empty so we see typing begin
+
+          function tick(){
+            i++;
+            el.innerHTML = nl2br(text.slice(0, i));
+            if(i < text.length){
+              setTimeout(tick, speed);
+            } else {
+              el.classList.remove('typing'); // stop caret after finishing
+            }
+          }
+          setTimeout(tick, 300);
+        } catch(e){
+          // If anything goes wrong, show full text so the page never looks broken
+          var el = document.getElementById('typed');
+          if(el){ el.innerHTML = nl2br(TEXT || el.textContent || ""); el.classList.remove('typing'); }
+          // console.error(e); // optionally uncomment for debugging
         }
       }
-      setTimeout(next,300);
-    });
+
+      if(document.readyState === 'complete' || document.readyState === 'interactive'){
+        start();
+      } else {
+        document.addEventListener('DOMContentLoaded', start, { once:true });
+        window.addEventListener('load', start, { once:true });
+      }
+    })();
   </script>
 </body>
 </html>
